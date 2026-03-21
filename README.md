@@ -2,8 +2,7 @@
 
 Многофункциональное плавающее расширение для блокнота SillyTavern. Идеально упорядочьте свои заметки о лоре, кампании и персонажах, не загромождая интерфейс чата.
 
-<img width="1233" height="949" alt="изображение" src="https://github.com/user-attachments/assets/609b9cf8-733e-478f-8a57-fd35a2b60891" />
-
+<img width="1236" height="1080" alt="изображение" src="https://github.com/user-attachments/assets/52e7e1d7-8277-4370-9466-6c705113216b" />
 
 ## ✨ Особенности
 
