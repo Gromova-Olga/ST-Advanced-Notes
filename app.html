@@ -1,0 +1,96 @@
+<!-- Плавающая кнопка-перо -->
+<div id="rn-fab" title="Rich Notepad">✒️</div>
+
+<!-- Основное окно -->
+<div id="rn-app" style="display:none;">
+    <div id="rn-titlebar">
+        <span>📝 ST-Advanced-Notes</span>
+        <div id="rn-titlebar-btns">
+            <button id="rn-toggle-sidebar" title="Скрыть/показать панель файлов">◀</button>
+            <button id="rn-close">✕</button>
+        </div>
+    </div>
+
+    <div id="rn-main">
+        <div id="rn-sidebar-overlay"></div>
+        <div id="rn-sidebar">
+            <div id="rn-sidebar-toolbar">
+                <button class="rn-icon-btn" id="rn-new-folder" title="Новая папка">📁+</button>
+                <button class="rn-icon-btn" id="rn-new-file" title="Новый файл">📄+</button>
+            </div>
+            <div id="rn-tree"></div>
+        </div>
+
+        <div id="rn-divider"></div>
+
+        <div id="rn-editor-panel">
+            <div id="rn-toolbar">
+                <div class="rn-tb-group">
+                    <button class="rn-tb-btn" data-cmd="bold" title="Жирный"><b>B</b></button>
+                    <button class="rn-tb-btn" data-cmd="italic" title="Курсив"><i>I</i></button>
+                    <button class="rn-tb-btn" data-cmd="underline" title="Подчёркнутый"><u>U</u></button>
+                    <button class="rn-tb-btn" data-cmd="strikeThrough" title="Зачёркнутый"><s>S</s></button>
+                </div>
+                <div class="rn-tb-sep"></div>
+                <div class="rn-tb-group">
+                    <button class="rn-tb-btn" data-cmd="insertUnorderedList" title="Маркированный список">• —</button>
+                    <button class="rn-tb-btn" data-cmd="insertOrderedList" title="Нумерованный список">1.</button>
+                </div>
+                <div class="rn-tb-sep"></div>
+                <div class="rn-tb-group">
+                    <label class="rn-tb-label" title="Цвет текста">
+                        A <input type="color" id="rn-color-text" value="#ffffff">
+                    </label>
+                    <label class="rn-tb-label" title="Цвет фона текста" style="background:rgba(255,255,255,0.1);">
+                        ▌ <input type="color" id="rn-color-bg" value="#ffff00">
+                    </label>
+                    <button class="rn-tb-btn" id="rn-clear-bg" title="Убрать фон текста">▌✕</button>
+                </div>
+                <div class="rn-tb-sep"></div>
+                <div class="rn-tb-group">
+                    <select id="rn-font-size" title="Размер шрифта">
+                        <option value="1">Tiny</option>
+                        <option value="2">Small</option>
+                        <option value="3" selected>Normal</option>
+                        <option value="4">Large</option>
+                        <option value="5">Huge</option>
+                    </select>
+                </div>
+                <div class="rn-tb-sep"></div>
+                <div class="rn-tb-group">
+                    <button class="rn-tb-btn" data-cmd="removeFormat" title="Сбросить форматирование">✕</button>
+                </div>
+                <div class="rn-tb-sep"></div>
+                <div class="rn-tb-group">
+                    <label class="rn-opacity-label" title="Прозрачность окна">
+                        🌫 <input type="range" id="rn-opacity-slider" min="10" max="100" value="100" step="5">
+                    </label>
+                </div>
+            </div>
+
+            <div id="rn-editor-placeholder">
+                <span>Выберите файл для редактирования</span>
+            </div>
+
+            <div id="rn-editor-area" style="display:none;">
+                <div id="rn-editor-filename">
+                    <span id="rn-filename-text"></span>
+                    <button id="rn-export-btn" title="Экспортировать как .txt">⬇ .txt</button>
+                </div>
+                <div id="rn-editor" contenteditable="true" spellcheck="false"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Popover для настройки папки -->
+<div id="rn-folder-popover" style="display:none;">
+    <div class="rn-pop-section">
+        <div class="rn-pop-label">Цвет папки</div>
+        <div id="rn-pop-colors" class="rn-pop-swatches"></div>
+    </div>
+    <div class="rn-pop-section">
+        <div class="rn-pop-label">Иконка папки</div>
+        <div id="rn-pop-icons" class="rn-pop-swatches"></div>
+    </div>
+</div>

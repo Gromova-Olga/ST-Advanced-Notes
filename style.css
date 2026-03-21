@@ -1,0 +1,682 @@
+/* Кнопка-перо */
+#rn-fab {
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    width: 44px;
+    height: 44px;
+    background: var(--SmartThemeBlurTintColor, #1a1a2e);
+    border: 2px solid var(--SmartThemeBorderColor, #555);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    cursor: grab;
+    z-index: 9999;
+    user-select: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    transition: box-shadow 0.2s;
+}
+#rn-fab:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+}
+
+/* Основное окно */
+#rn-app {
+    position: fixed;
+    top: 80px;
+    left: 200px;
+    width: 600px;
+    height: 450px;
+    min-width: 320px;
+    min-height: 250px;
+    background: var(--SmartThemeBlurTintColor, #1a1a2e);
+    border: 2px solid var(--SmartThemeBorderColor, #555);
+    border-radius: 10px;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    resize: both;
+    overflow: hidden;
+}
+
+/* Заголовок окна */
+#rn-titlebar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.05);
+    border-bottom: 1px solid var(--SmartThemeBorderColor, #555);
+    cursor: grab;
+    user-select: none;
+    flex-shrink: 0;
+}
+#rn-titlebar span {
+    font-weight: bold;
+    font-size: 14px;
+}
+#rn-titlebar:active {
+    cursor: grabbing;
+}
+
+/* Кнопка закрыть */
+#rn-close {
+    background: none;
+    border: none;
+    color: inherit;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    line-height: 1;
+}
+#rn-close:hover {
+    background: rgba(255,0,0,0.2);
+}
+
+/* Тело окна */
+#rn-body {
+    flex: 1;
+    padding: 16px;
+    overflow: auto;
+    color: var(--SmartThemeBodyColor, #ccc);
+}   
+
+/* ===== FAB ===== */
+#rn-fab {
+    position: fixed;
+    top: 400px;   /* будет перезаписано из state */
+    left: calc(100vw - 80px);
+    bottom: auto;
+    right: auto;
+    width: 44px;
+    height: 44px;
+    background: var(--SmartThemeBlurTintColor, #1a1a2e);
+    border: 2px solid var(--SmartThemeBorderColor, #555);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    cursor: grab;
+    z-index: 9999;
+    user-select: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    transition: box-shadow 0.2s;
+}
+#rn-fab:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.6); }
+
+/* ===== ОКНО ===== */
+#rn-app {
+    position: fixed;
+    top: 80px;
+    left: 200px;
+    width: 700px;
+    height: 500px;
+    min-width: 400px;
+    min-height: 300px;
+    background: var(--SmartThemeBlurTintColor, #1a1a2e);
+    border: 2px solid var(--SmartThemeBorderColor, #555);
+    border-radius: 10px;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    resize: both;
+    overflow: hidden;
+}
+
+/* ===== TITLEBAR ===== */
+#rn-titlebar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.05);
+    border-bottom: 1px solid var(--SmartThemeBorderColor, #555);
+    cursor: grab;
+    user-select: none;
+    flex-shrink: 0;
+}
+#rn-titlebar span { font-weight: bold; font-size: 14px; }
+#rn-titlebar:active { cursor: grabbing; }
+
+#rn-close {
+    background: none;
+    border: none;
+    color: inherit;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+#rn-close:hover { background: rgba(255,0,0,0.2); }
+
+/* ===== MAIN LAYOUT ===== */
+#rn-main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* ===== SIDEBAR ===== */
+#rn-sidebar {
+    width: 200px;
+    min-width: 120px;
+    max-width: 350px;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--SmartThemeBorderColor, #555);
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+#rn-sidebar-toolbar {
+    display: flex;
+    gap: 4px;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--SmartThemeBorderColor, #555);
+    flex-shrink: 0;
+    background: rgba(255,255,255,0.03);
+}
+
+.rn-icon-btn {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid var(--SmartThemeBorderColor, #555);
+    color: inherit;
+    border-radius: 5px;
+    padding: 3px 7px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background 0.15s;
+}
+.rn-icon-btn:hover { background: rgba(255,255,255,0.15); }
+
+#rn-tree {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 0;
+}
+
+.rn-empty-hint {
+    color: rgba(255,255,255,0.3);
+    font-size: 12px;
+    text-align: center;
+    padding: 20px 8px;
+    line-height: 1.6;
+}
+
+/* ===== FOLDER & FILE ROWS ===== */
+.rn-folder-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 6px;
+    cursor: pointer;
+    border-radius: 4px;
+    user-select: none;
+    position: relative;
+}
+.rn-folder-row:hover { background: rgba(255,255,255,0.07); }
+
+.rn-file {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 6px;
+    cursor: pointer;
+    border-radius: 4px;
+    user-select: none;
+    position: relative;
+}
+.rn-file:hover { background: rgba(255,255,255,0.07); }
+.rn-file-active { background: rgba(255,255,255,0.12) !important; }
+
+.rn-arrow { font-size: 10px; width: 12px; flex-shrink: 0; }
+.rn-folder-icon, .rn-file-icon { flex-shrink: 0; }
+
+.rn-node-name {
+    flex: 1;
+    font-size: 13px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Кнопки действий — показываем при наведении */
+.rn-node-actions {
+    display: none;
+    gap: 2px;
+    flex-shrink: 0;
+}
+.rn-folder-row:hover .rn-node-actions,
+.rn-file:hover .rn-node-actions {
+    display: flex;
+}
+
+.rn-act {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 11px;
+    padding: 1px 3px;
+    border-radius: 3px;
+    opacity: 0.7;
+    line-height: 1;
+}
+.rn-act:hover { background: rgba(255,255,255,0.15); opacity: 1; }
+
+/* ===== DIVIDER ===== */
+#rn-divider {
+    width: 4px;
+    background: var(--SmartThemeBorderColor, #555);
+    cursor: col-resize;
+    flex-shrink: 0;
+}
+#rn-divider:hover { background: var(--SmartThemeQuoteColor, #888); }
+
+/* ===== EDITOR ===== */
+#rn-editor-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+#rn-editor-placeholder {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255,255,255,0.25);
+    font-size: 14px;
+    font-style: italic;
+}
+#rn-editor-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+#rn-editor-filename {
+    padding: 6px 12px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.4);
+    border-bottom: 1px solid var(--SmartThemeBorderColor, #555);
+    flex-shrink: 0;
+    background: rgba(255,255,255,0.03);
+}
+#rn-editor {
+    flex: 1;
+    padding: 14px 16px;
+    overflow-y: auto;
+    outline: none;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--SmartThemeBodyColor, #ccc);
+    word-break: break-word;
+}
+
+/* ===== TOOLBAR ===== */
+#rn-toolbar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 5px 8px;
+    border-bottom: 1px solid var(--SmartThemeBorderColor, #555);
+    background: rgba(255,255,255,0.03);
+    flex-shrink: 0;
+    user-select: none;
+}
+
+.rn-tb-group {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.rn-tb-sep {
+    width: 1px;
+    height: 18px;
+    background: var(--SmartThemeBorderColor, #555);
+    margin: 0 3px;
+}
+
+.rn-tb-btn {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid transparent;
+    color: inherit;
+    border-radius: 4px;
+    padding: 2px 7px;
+    cursor: pointer;
+    font-size: 13px;
+    min-width: 26px;
+    transition: background 0.15s, border-color 0.15s;
+    line-height: 1.4;
+}
+.rn-tb-btn:hover { background: rgba(255,255,255,0.14); }
+.rn-tb-active {
+    background: rgba(255,255,255,0.18) !important;
+    border-color: var(--SmartThemeQuoteColor, #888) !important;
+}
+
+/* Цветовые пикеры */
+.rn-tb-label {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    font-size: 13px;
+    background: rgba(255,255,255,0.06);
+    transition: background 0.15s;
+}
+.rn-tb-label:hover { background: rgba(255,255,255,0.14); }
+.rn-tb-label input[type="color"] {
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    background: none;
+}
+
+/* Размер шрифта */
+#rn-font-size {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--SmartThemeBorderColor, #555);
+    color: inherit;
+    border-radius: 4px;
+    padding: 2px 4px;
+    font-size: 12px;
+    cursor: pointer;
+}
+#rn-font-size:hover { background: rgba(255,255,255,0.14); }
+
+/* ===== FOLDER POPOVER ===== */
+#rn-folder-popover {
+    position: fixed;
+    z-index: 11000;
+    background: var(--SmartThemeBlurTintColor, #1e1e2e);
+    border: 1px solid var(--SmartThemeBorderColor, #555);
+    border-radius: 8px;
+    padding: 10px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    width: 210px;
+}
+
+.rn-pop-section { margin-bottom: 8px; }
+.rn-pop-section:last-child { margin-bottom: 0; }
+
+.rn-pop-label {
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.rn-pop-swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.rn-swatch {
+    width: 26px;
+    height: 26px;
+    border-radius: 5px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: border-color 0.15s, transform 0.1s;
+}
+.rn-swatch:hover {
+    border-color: rgba(255,255,255,0.5);
+    transform: scale(1.15);
+}
+
+.rn-color-swatch { border-color: rgba(0,0,0,0.2); }
+
+.rn-swatch-none {
+    background: rgba(255,255,255,0.07) !important;
+    color: rgba(255,255,255,0.4);
+    font-size: 12px;
+}
+
+/* ===== EXPORT BUTTON ===== */
+#rn-editor-filename {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 8px 4px 12px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.4);
+    border-bottom: 1px solid var(--SmartThemeBorderColor, #555);
+    flex-shrink: 0;
+    background: rgba(255,255,255,0.03);
+}
+
+#rn-export-btn {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid var(--SmartThemeBorderColor, #555);
+    color: inherit;
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 11px;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.15s, background 0.15s;
+}
+#rn-export-btn:hover {
+    opacity: 1;
+    background: rgba(255,255,255,0.15);
+}
+
+/* ===== TITLEBAR BTNS ===== */
+#rn-titlebar-btns {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+#rn-toggle-sidebar {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid var(--SmartThemeBorderColor, #555);
+    color: inherit;
+    border-radius: 4px;
+    padding: 2px 7px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background 0.15s;
+}
+#rn-toggle-sidebar:hover { background: rgba(255,255,255,0.15); }
+
+/* ===== МОБИЛЬНАЯ АДАПТАЦИЯ ===== */
+@media (max-width: 600px) {
+
+    /* Окно на весь экран */
+    #rn-app {
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        border-radius: 0;
+        border: none;
+        resize: none;
+    }
+
+    /* Titlebar чуть выше для удобства тапа */
+    #rn-titlebar {
+        padding: 12px 14px;
+    }
+
+    /* Сайдбар на мобиле — поверх редактора как drawer */
+    #rn-main {
+        position: relative;
+    }
+
+    #rn-sidebar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        z-index: 100;
+        background: var(--SmartThemeBlurTintColor, #1a1a2e);
+        border-right: 2px solid var(--SmartThemeBorderColor, #555);
+        width: 75vw !important;
+        max-width: 75vw !important;
+        box-shadow: 4px 0 16px rgba(0,0,0,0.4);
+        transition: transform 0.2s ease;
+    }
+
+    /* Скрытый сайдбар уходит влево */
+    #rn-sidebar[data-hidden="true"] {
+        display: block !important;
+        transform: translateX(-100%);
+        pointer-events: none;
+    }
+
+    #rn-divider {
+        display: none !important;
+    }
+
+    /* Редактор занимает всю ширину */
+    #rn-editor-panel {
+        width: 100%;
+    }
+
+    /* Тулбар переносится на две строки нормально */
+    #rn-toolbar {
+        gap: 6px;
+        padding: 6px 8px;
+    }
+
+    .rn-tb-btn {
+        padding: 4px 9px;
+        font-size: 14px;
+        min-width: 32px;
+    }
+
+    /* Кнопки папок/файлов крупнее для тапа */
+    .rn-icon-btn {
+        padding: 6px 10px;
+        font-size: 15px;
+    }
+
+    .rn-folder-row,
+    .rn-file {
+        padding: 7px 6px;
+    }
+
+    .rn-node-name {
+        font-size: 14px;
+    }
+
+    /* Кнопки действий всегда видны на мобиле */
+    .rn-node-actions {
+        display: flex !important;
+    }
+
+    /* FAB чуть крупнее */
+    #rn-fab {
+        width: 52px;
+        height: 52px;
+        font-size: 26px;
+    }
+
+    /* Редактор */
+    #rn-editor {
+        font-size: 15px;
+        padding: 12px;
+    }
+}
+
+/* Затемнение под сайдбаром на мобиле */
+#rn-sidebar-overlay {
+    display: none;
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.4);
+    z-index: 99;
+    pointer-events: none;
+}
+
+@media (max-width: 600px) {
+    #rn-sidebar-overlay.active {
+        display: block;
+        pointer-events: all;
+    }
+}
+
+/* ===== OPACITY SLIDER ===== */
+.rn-opacity-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    opacity: 0.7;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+.rn-opacity-label:hover { opacity: 1; }
+
+#rn-opacity-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 70px;
+    height: 3px;
+    border-radius: 2px;
+    background: rgba(255,255,255,0.3);
+    outline: none;
+    cursor: pointer;
+}
+#rn-opacity-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.8);
+    cursor: pointer;
+}
+#rn-opacity-slider::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.8);
+    cursor: pointer;
+    border: none;
+}
+
+/* ===== DRAG & DROP ===== */
+.rn-drag-source {
+    opacity: 0.4;
+}
+
+.rn-drag-over {
+    background: rgba(255,255,255,0.15) !important;
+    outline: 1px dashed rgba(255,255,255,0.4);
+    border-radius: 4px;
+}
+
+.rn-folder-row[draggable="true"],
+.rn-file[draggable="true"] {
+    cursor: grab;
+}
+
+#rn-tree.rn-drag-over-root {
+    background: rgba(255,255,255,0.05);
+    outline: 1px dashed rgba(255,255,255,0.25);
+    border-radius: 4px;
+}
