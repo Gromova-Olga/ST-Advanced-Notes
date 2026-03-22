@@ -107,18 +107,21 @@ function loadState() {
     const s = extension_settings[extensionName];
     if (!s.tree)   s.tree = [];
     if (!s.window) s.window = { ...defaultSettings.window };
-    
-    // ЖЕСТКИЙ СБРОС КООРДИНАТ КНОПКИ
-    // Если координат нет, они сломаны, или это не числа (например NaN) — пересоздаем дефолтные
-    if (!s.fab || typeof s.fab.top !== 'number' || typeof s.fab.left !== 'number' || isNaN(s.fab.top) || isNaN(s.fab.left)) {
-        s.fab = { 
-            top: window.innerHeight / 2, // по центру высоты
-            left: window.innerWidth - 80 // справа
-        };
+    // Сбрасываем старый формат с bottom/right
+    if (!s.fab || s.fab.bottom !== undefined) {
+        s.fab = { top: window.innerHeight - 120, left: window.innerWidth - 80 };
     }
-    
     if (s.sidebarWidth === undefined) s.sidebarWidth = 200;
     state = s;
+}
+
+function saveState() {
+    extension_settings[extensionName] = state;
+    saveSettingsDebounced();
+}
+
+function genId() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 }
 
 // ===== GEOMETRY =====
@@ -131,31 +134,18 @@ function applyWindowGeometry() {
         height: w.height
     });
 
-    // Берем проверенные координаты
-    let fTop = Number(state.fab.top) || (window.innerHeight / 2);
-    let fLeft = Number(state.fab.left) || (window.innerWidth - 80);
-
-    const maxLeft = window.innerWidth - 60;
-    const maxTop = window.innerHeight - 60;
-
-    // Последняя линия обороны от выхода за экран
-    if (fLeft > maxLeft) fLeft = maxLeft - 20;
-    if (fTop > maxTop) fTop = maxTop - 20;
-    if (fLeft < 0) fLeft = 20;
-    if (fTop < 0) fTop = 20;
-
-    // Принудительно ставим display: flex и огромный z-index, чтобы Таверна не перекрывала
+    const f = state.fab;
+    // Всегда восстанавливаем через top/left
     $("#rn-fab").css({
-        top:    fTop + "px",
-        left:   fLeft + "px",
+        top:    f.top,
+        left:   f.left,
         bottom: "auto",
-        right:  "auto",
-        display: "flex",
-        zIndex: 99999 
+        right:  "auto"
     });
 
     $("#rn-sidebar").css("width", state.sidebarWidth + "px");
 }
+
 function applyOpacity(val) {
     const opacity = val / 100;
     // Меняем только фон, а не весь элемент включая текст
@@ -442,6 +432,7 @@ function updateToolbarState() {
 
 // ===== DRAG & DROP TREE =====
 let dragNode = null;
+let dragSourceParent = null;
 
 function findParentArray(tree, id) {
     for (let i = 0; i < tree.length; i++) {
@@ -455,14 +446,10 @@ function findParentArray(tree, id) {
 }
 
 function initTreeDragDrop() {
-    const $tree = $("#rn-tree");
-    // Отвязываем старые события, чтобы не дублировать
-    $tree.off("dragstart dragend dragover dragleave drop touchstart");
-    $(document).off(".rn-tree-touch"); 
+    $("#rn-tree").off("dragstart dragend dragover dragleave drop");
 
-    // ===== 1. DESKTOP (Native HTML5) =====
-    $tree.on("dragstart", ".rn-folder[draggable], .rn-file[draggable]", function(e) {
-        e.stopPropagation();
+    $("#rn-tree").on("dragstart", ".rn-folder[draggable], .rn-file[draggable]", function(e) {
+        e.stopPropagation(); // <-- ФИКС 1: Останавливаем всплытие, чтобы не захватывать родительскую папку
         dragNode = findById(state.tree, $(this).data("id"));
         if (!dragNode) return;
         e.originalEvent.dataTransfer.effectAllowed = "move";
@@ -470,182 +457,82 @@ function initTreeDragDrop() {
         setTimeout(() => $(this).addClass("rn-drag-source"), 0);
     });
 
-    $tree.on("dragend", function() {
+    $("#rn-tree").on("dragend", function() {
         $(".rn-drag-source").removeClass("rn-drag-source");
         $(".rn-drag-over").removeClass("rn-drag-over");
-        $tree.removeClass("rn-drag-over-root");
+        $("#rn-tree").removeClass("rn-drag-over-root");
         dragNode = null;
     });
 
-    $tree.on("dragover", function(e) {
+    // Единый dragover — определяем цель
+    $("#rn-tree").on("dragover", function(e) {
         e.preventDefault();
         e.originalEvent.dataTransfer.dropEffect = "move";
+
         const $target = $(e.target).closest(".rn-folder[draggable], .rn-file[draggable]");
         $(".rn-drag-over").removeClass("rn-drag-over");
-        
+
         if ($target.length) {
-            $tree.removeClass("rn-drag-over-root");
+            $("#rn-tree").removeClass("rn-drag-over-root");
             $target.addClass("rn-drag-over");
         } else {
-            $tree.addClass("rn-drag-over-root");
+            $("#rn-tree").addClass("rn-drag-over-root");
         }
     });
 
-    $tree.on("dragleave", function(e) {
+    $("#rn-tree").on("dragleave", function(e) {
         if (!$(e.relatedTarget).closest("#rn-tree").length) {
             $(".rn-drag-over").removeClass("rn-drag-over");
-            $tree.removeClass("rn-drag-over-root");
+            $("#rn-tree").removeClass("rn-drag-over-root");
         }
     });
 
-    $tree.on("drop", function(e) {
-        e.stopPropagation();
+    // Единый drop — определяем куда кидаем
+    $("#rn-tree").on("drop", function(e) {
+        e.stopPropagation(); // На всякий случай останавливаем всплытие и здесь
         e.preventDefault();
         $(".rn-drag-over").removeClass("rn-drag-over");
-        $tree.removeClass("rn-drag-over-root");
+        $("#rn-tree").removeClass("rn-drag-over-root");
 
         if (!dragNode) return;
+
         const $target = $(e.target).closest(".rn-folder[draggable], .rn-file[draggable]");
-        processDrop($target.length ? $target.data("id") : null, true);
-    });
 
-    // ===== 2. MOBILE (Touch Events) =====
-    let touchTimer = null;
-    let isTouchDragging = false;
-    let $touchGhost = null;
+        if ($target.length) {
+            // Кидаем на конкретный элемент
+            const targetId = $target.data("id");
+            const targetNode = findById(state.tree, targetId);
 
-    $tree.on("touchstart", ".rn-folder, .rn-file", function(e) {
-        // Игнорируем тапы по кнопкам действий и стрелкам
-        if ($(e.target).closest(".rn-act, .rn-arrow").length) return;
-        
-        const touch = e.originalEvent.touches[0];
-        const $nodeEl = $(this);
-        const targetId = $nodeEl.data("id");
+            if (!targetNode || targetNode.id === dragNode.id) return;
+            if (isDescendant(dragNode, targetNode.id)) return;
 
-        // Запускаем таймер долгого нажатия
-        touchTimer = setTimeout(() => {
-            isTouchDragging = true;
-            dragNode = findById(state.tree, targetId);
-            $nodeEl.addClass("rn-drag-source");
-            
-            // Создаем визуального "призрака" для пальца
-            $touchGhost = $nodeEl.clone().css({
-                position: "fixed",
-                top: touch.clientY - 15,
-                left: touch.clientX - 15,
-                width: $nodeEl.width(),
-                opacity: 0.8,
-                zIndex: 11000,
-                pointerEvents: "none",
-                background: "var(--SmartThemeBlurTintColor, #1a1a2e)",
-                border: "1px solid var(--SmartThemeBorderColor, #555)",
-                borderRadius: "4px"
-            }).appendTo("body");
-            
-            if (navigator.vibrate) navigator.vibrate(40); // Легкий виброотклик
-        }, 400); // 400мс удержание
-    });
+            const src = findParentArray(state.tree, dragNode.id);
+            if (!src) return;
+            src.arr.splice(src.index, 1);
 
-    $(document).on("touchmove.rn-tree-touch", function(e) {
-        if (!isTouchDragging) {
-            clearTimeout(touchTimer); // Отменяем таймер, если палец сдвинулся (это скролл)
-            return;
-        }
-        e.preventDefault(); // Запрещаем скролл экрана при перетаскивании
-        
-        const touch = e.originalEvent.touches[0];
-        $touchGhost.css({ top: touch.clientY - 15, left: touch.clientX - 15 });
-
-        // Ищем элемент под пальцем (прячем призрака на миллисекунду, чтобы он не перекрывал)
-        $touchGhost.hide();
-        const elemBelow = document.elementFromPoint(touch.clientX, touch.clientY);
-        $touchGhost.show();
-
-        $(".rn-drag-over").removeClass("rn-drag-over");
-        $tree.removeClass("rn-drag-over-root");
-
-        if (!elemBelow) return;
-
-        const $dropTarget = $(elemBelow).closest(".rn-folder, .rn-file");
-        if ($dropTarget.length && $dropTarget.closest("#rn-tree").length) {
-            $dropTarget.addClass("rn-drag-over");
-        } else if ($(elemBelow).closest("#rn-tree").length) {
-            $tree.addClass("rn-drag-over-root");
-        }
-    });
-
-    $(document).on("touchend.rn-tree-touch touchcancel.rn-tree-touch", function(e) {
-        clearTimeout(touchTimer);
-        if (!isTouchDragging) return;
-        isTouchDragging = false;
-
-        if ($touchGhost) { $touchGhost.remove(); $touchGhost = null; }
-
-        const touch = e.originalEvent.changedTouches[0];
-        const elemBelow = document.elementFromPoint(touch.clientX, touch.clientY);
-
-        $(".rn-drag-over").removeClass("rn-drag-over");
-        $tree.removeClass("rn-drag-over-root");
-        $(".rn-drag-source").removeClass("rn-drag-source");
-
-        if (!dragNode || !elemBelow) { dragNode = null; return; }
-
-        const $dropTarget = $(elemBelow).closest(".rn-folder, .rn-file");
-        const isInsideTree = $(elemBelow).closest("#rn-tree").length > 0;
-
-        // Передаем логику в общую функцию
-        if ($dropTarget.length) {
-            processDrop($dropTarget.data("id"), false);
-        } else if (isInsideTree) {
-            processDrop(null, true);
+            if (targetNode.type === "folder") {
+                targetNode.children = targetNode.children || [];
+                targetNode.children.unshift(dragNode);
+                targetNode.expanded = true;
+            } else {
+                const dest = findParentArray(state.tree, targetId);
+                if (!dest) return;
+                dest.arr.splice(dest.index + 1, 0, dragNode);
+            }
         } else {
-            dragNode = null;
+            // Кидаем в корень
+            // ФИКС 2: Убрана лишняя блокировка (some), мешавшая скидывать элементы в корень
+            const src = findParentArray(state.tree, dragNode.id);
+            if (!src) return;
+            src.arr.splice(src.index, 1);
+            state.tree.push(dragNode);
         }
+
+        dragNode = null;
+        saveState();
+        renderTree();
+        initTreeDragDrop();
     });
-}
-
-function isDescendant(node, targetId) {
-    if (!node.children) return false;
-    for (const child of node.children) {
-        if (child.id === targetId) return true;
-        if (isDescendant(child, targetId)) return true;
-    }
-    return false;
-}
-
-// Общая логика изменения state (для ПК и Mobile)
-function processDrop(targetId, isRootDrop) {
-    if (!dragNode) return;
-
-    if (targetId) {
-        const targetNode = findById(state.tree, targetId);
-        if (!targetNode || targetNode.id === dragNode.id) { dragNode = null; return; }
-        if (isDescendant(dragNode, targetNode.id)) { dragNode = null; return; }
-
-        const src = findParentArray(state.tree, dragNode.id);
-        if (!src) { dragNode = null; return; }
-        src.arr.splice(src.index, 1);
-
-        if (targetNode.type === "folder") {
-            targetNode.children = targetNode.children || [];
-            targetNode.children.unshift(dragNode);
-            targetNode.expanded = true;
-        } else {
-            const dest = findParentArray(state.tree, targetId);
-            if (!dest) { dragNode = null; return; }
-            dest.arr.splice(dest.index + 1, 0, dragNode);
-        }
-    } else if (isRootDrop) {
-        const src = findParentArray(state.tree, dragNode.id);
-        if (!src) { dragNode = null; return; }
-        src.arr.splice(src.index, 1);
-        state.tree.push(dragNode);
-    }
-
-    dragNode = null;
-    saveState();
-    renderTree();
-    initTreeDragDrop(); // Перевешиваем события
 }
 
 function isDescendant(node, targetId) {
@@ -801,49 +688,27 @@ function makeDraggable($element, $handle, onEnd, isFab = false) {
     let hasMoved = false;
     let startX, startY, origLeft, origTop;
 
-    $handle.on("mousedown touchstart", (e) => {
+    $handle.on("mousedown", (e) => {
         if ($(e.target).closest("button, input, select, .rn-icon-btn, .rn-act, #rn-editor, #rn-editor-panel, #rn-main, #rn-sidebar").length) return;
-        if (e.type === "mousedown" && e.button !== 0) return;
-
+        if (e.button !== 0) return;
         isDragging = true;
         hasMoved = false;
-        
-        const evt = e.type === "touchstart" ? e.originalEvent.touches[0] : e;
-        startX = evt.clientX; 
-        startY = evt.clientY;
-        
-        // Надежно берем текущие координаты, даже если в CSS прописано right/bottom
-        const offset = $element.offset();
-        origLeft = offset.left - $(window).scrollLeft();
-        origTop  = offset.top - $(window).scrollTop();
+        startX = e.clientX; startY = e.clientY;
+        origLeft = parseInt($element.css("left")) || 0;
+        origTop  = parseInt($element.css("top"))  || 0;
+        e.preventDefault();
     });
 
-    $(document).on("mousemove.rn-drag touchmove.rn-drag", (e) => {
+    $(document).on("mousemove.rn-drag", (e) => {
         if (!isDragging) return;
-        const evt = e.type === "touchmove" ? e.originalEvent.touches[0] : e;
-        
-        const dx = evt.clientX - startX;
-        const dy = evt.clientY - startY;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
         if (!hasMoved && Math.abs(dx) < 4 && Math.abs(dy) < 4) return;
-        
         hasMoved = true;
-        if (e.type === "touchmove") e.preventDefault(); // Блокируем скролл страницы на мобилке
-        
-        let newLeft = origLeft + dx;
-        let newTop = origTop + dy;
-        
-        // Ограничиваем перетаскивание FAB рамками экрана
-        if (isFab) {
-            const maxLeft = window.innerWidth - $element.outerWidth();
-            const maxTop = window.innerHeight - $element.outerHeight();
-            newLeft = Math.max(0, Math.min(newLeft, maxLeft));
-            newTop = Math.max(0, Math.min(newTop, maxTop));
-        }
-        
-        $element.css({ left: newLeft, top: newTop, bottom: 'auto', right: 'auto' });
+        $element.css({ left: origLeft + dx, top: origTop + dy });
     });
 
-    $(document).on("mouseup.rn-drag touchend.rn-drag", (e) => {
+    $(document).on("mouseup.rn-drag", (e) => {
         if (!isDragging) return;
         const moved = hasMoved;
         isDragging = false;
@@ -851,8 +716,8 @@ function makeDraggable($element, $handle, onEnd, isFab = false) {
         if (moved) {
             if (onEnd) onEnd();
         } else if (isFab) {
-            toggleApp(); // Если это был просто тап/клик, открываем блокнот
-            if (e.type === "touchend") e.preventDefault(); 
+            // Это был чистый клик по FAB — открываем/закрываем
+            toggleApp();
         }
         hasMoved = false;
     });
@@ -862,24 +727,17 @@ function makeSidebarResize() {
     const $divider = $("#rn-divider");
     const $sidebar = $("#rn-sidebar");
     let isResizing = false, startX, startWidth;
-    
-    $divider.on("mousedown touchstart", (e) => {
-        isResizing = true; 
-        const evt = e.type === "touchstart" ? e.originalEvent.touches[0] : e;
-        startX = evt.clientX; 
-        startWidth = $sidebar.width();
-        if (e.type === "touchstart") e.preventDefault();
+    $divider.on("mousedown", (e) => {
+        isResizing = true; startX = e.clientX; startWidth = $sidebar.width();
+        e.preventDefault();
     });
-    
-    $(document).on("mousemove.rn-resize touchmove.rn-resize", (e) => {
+    $(document).on("mousemove.rn-resize", (e) => {
         if (!isResizing) return;
-        const evt = e.type === "touchmove" ? e.originalEvent.touches[0] : e;
-        const w = Math.max(120, Math.min(350, startWidth + (evt.clientX - startX)));
+        const w = Math.max(120, Math.min(350, startWidth + (e.clientX - startX)));
         $sidebar.css("width", w + "px");
         state.sidebarWidth = w;
     });
-    
-    $(document).on("mouseup.rn-resize touchend.rn-resize", () => {
+    $(document).on("mouseup.rn-resize", () => {
         if (isResizing) saveState();
         isResizing = false;
     });
