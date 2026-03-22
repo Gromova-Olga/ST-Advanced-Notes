@@ -107,21 +107,18 @@ function loadState() {
     const s = extension_settings[extensionName];
     if (!s.tree)   s.tree = [];
     if (!s.window) s.window = { ...defaultSettings.window };
-    // Сбрасываем старый формат с bottom/right
-    if (!s.fab || s.fab.bottom !== undefined) {
-        s.fab = { top: window.innerHeight - 120, left: window.innerWidth - 80 };
+    
+    // ЖЕСТКИЙ СБРОС КООРДИНАТ КНОПКИ
+    // Если координат нет, они сломаны, или это не числа (например NaN) — пересоздаем дефолтные
+    if (!s.fab || typeof s.fab.top !== 'number' || typeof s.fab.left !== 'number' || isNaN(s.fab.top) || isNaN(s.fab.left)) {
+        s.fab = { 
+            top: window.innerHeight / 2, // по центру высоты
+            left: window.innerWidth - 80 // справа
+        };
     }
+    
     if (s.sidebarWidth === undefined) s.sidebarWidth = 200;
     state = s;
-}
-
-function saveState() {
-    extension_settings[extensionName] = state;
-    saveSettingsDebounced();
-}
-
-function genId() {
-    return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 }
 
 // ===== GEOMETRY =====
@@ -134,23 +131,27 @@ function applyWindowGeometry() {
         height: w.height
     });
 
-    let f = state.fab;
-    // --- НАЧАЛО ЗАЩИТЫ ГРАНИЦ ---
-    const maxLeft = window.innerWidth - 60; // 60px — примерная ширина кнопки с запасом
+    // Берем проверенные координаты
+    let fTop = Number(state.fab.top) || (window.innerHeight / 2);
+    let fLeft = Number(state.fab.left) || (window.innerWidth - 80);
+
+    const maxLeft = window.innerWidth - 60;
     const maxTop = window.innerHeight - 60;
 
-    // Не даём координатам стать NaN или уйти за края
-    if (isNaN(f.left) || f.left > maxLeft) f.left = maxLeft - 20;
-    if (isNaN(f.top) || f.top > maxTop) f.top = maxTop - 20;
-    if (f.left < 0) f.left = 20;
-    if (f.top < 0) f.top = 20;
-    // --- КОНЕЦ ЗАЩИТЫ ГРАНИЦ ---
+    // Последняя линия обороны от выхода за экран
+    if (fLeft > maxLeft) fLeft = maxLeft - 20;
+    if (fTop > maxTop) fTop = maxTop - 20;
+    if (fLeft < 0) fLeft = 20;
+    if (fTop < 0) fTop = 20;
 
+    // Принудительно ставим display: flex и огромный z-index, чтобы Таверна не перекрывала
     $("#rn-fab").css({
-        top:    f.top,
-        left:   f.left,
+        top:    fTop + "px",
+        left:   fLeft + "px",
         bottom: "auto",
-        right:  "auto"
+        right:  "auto",
+        display: "flex",
+        zIndex: 99999 
     });
 
     $("#rn-sidebar").css("width", state.sidebarWidth + "px");
