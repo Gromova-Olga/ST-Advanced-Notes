@@ -134,8 +134,18 @@ function applyWindowGeometry() {
         height: w.height
     });
 
-    const f = state.fab;
-    // Всегда восстанавливаем через top/left
+    let f = state.fab;
+    // --- НАЧАЛО ЗАЩИТЫ ГРАНИЦ ---
+    const maxLeft = window.innerWidth - 60; // 60px — примерная ширина кнопки с запасом
+    const maxTop = window.innerHeight - 60;
+
+    // Не даём координатам стать NaN или уйти за края
+    if (isNaN(f.left) || f.left > maxLeft) f.left = maxLeft - 20;
+    if (isNaN(f.top) || f.top > maxTop) f.top = maxTop - 20;
+    if (f.left < 0) f.left = 20;
+    if (f.top < 0) f.top = 20;
+    // --- КОНЕЦ ЗАЩИТЫ ГРАНИЦ ---
+
     $("#rn-fab").css({
         top:    f.top,
         left:   f.left,
@@ -145,7 +155,6 @@ function applyWindowGeometry() {
 
     $("#rn-sidebar").css("width", state.sidebarWidth + "px");
 }
-
 function applyOpacity(val) {
     const opacity = val / 100;
     // Меняем только фон, а не весь элемент включая текст
@@ -799,9 +808,13 @@ function makeDraggable($element, $handle, onEnd, isFab = false) {
         hasMoved = false;
         
         const evt = e.type === "touchstart" ? e.originalEvent.touches[0] : e;
-        startX = evt.clientX; startY = evt.clientY;
-        origLeft = parseInt($element.css("left")) || 0;
-        origTop  = parseInt($element.css("top"))  || 0;
+        startX = evt.clientX; 
+        startY = evt.clientY;
+        
+        // Надежно берем текущие координаты, даже если в CSS прописано right/bottom
+        const offset = $element.offset();
+        origLeft = offset.left - $(window).scrollLeft();
+        origTop  = offset.top - $(window).scrollTop();
     });
 
     $(document).on("mousemove.rn-drag touchmove.rn-drag", (e) => {
@@ -813,8 +826,20 @@ function makeDraggable($element, $handle, onEnd, isFab = false) {
         if (!hasMoved && Math.abs(dx) < 4 && Math.abs(dy) < 4) return;
         
         hasMoved = true;
-        if (e.type === "touchmove") e.preventDefault(); // Запрещаем скролл при перетаскивании FAB
-        $element.css({ left: origLeft + dx, top: origTop + dy });
+        if (e.type === "touchmove") e.preventDefault(); // Блокируем скролл страницы на мобилке
+        
+        let newLeft = origLeft + dx;
+        let newTop = origTop + dy;
+        
+        // Ограничиваем перетаскивание FAB рамками экрана
+        if (isFab) {
+            const maxLeft = window.innerWidth - $element.outerWidth();
+            const maxTop = window.innerHeight - $element.outerHeight();
+            newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+            newTop = Math.max(0, Math.min(newTop, maxTop));
+        }
+        
+        $element.css({ left: newLeft, top: newTop, bottom: 'auto', right: 'auto' });
     });
 
     $(document).on("mouseup.rn-drag touchend.rn-drag", (e) => {
@@ -825,9 +850,8 @@ function makeDraggable($element, $handle, onEnd, isFab = false) {
         if (moved) {
             if (onEnd) onEnd();
         } else if (isFab) {
-            // Если это был быстрый тап (не тащили)
-            toggleApp();
-            if (e.type === "touchend") e.preventDefault(); // Глушим дублирующий mouseup на тачах
+            toggleApp(); // Если это был просто тап/клик, открываем блокнот
+            if (e.type === "touchend") e.preventDefault(); 
         }
         hasMoved = false;
     });
