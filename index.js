@@ -688,39 +688,95 @@ function makeDraggable($element, $handle, onEnd, isFab = false) {
     let hasMoved = false;
     let startX, startY, origLeft, origTop;
 
-    $handle.on("mousedown", (e) => {
-        if ($(e.target).closest("button, input, select, .rn-icon-btn, .rn-act, #rn-editor, #rn-editor-panel, #rn-main, #rn-sidebar").length) return;
-        if (e.button !== 0) return;
+    // Добавляем/удаляем класс для блокировки скролла на мобильных
+    function setDraggingActive(active) {
+        if (active) {
+            document.body.classList.add('rn-dragging-active');
+        } else {
+            document.body.classList.remove('rn-dragging-active');
+        }
+    }
+
+    function getClientCoords(e) {
+        const clientX = e.clientX ?? (e.touches ? e.touches[0].clientX : 0);
+        const clientY = e.clientY ?? (e.touches ? e.touches[0].clientY : 0);
+        return { clientX, clientY };
+    }
+
+    function onStart(e) {
+        // Проверяем, не кликнули ли по интерактивному элементу
+        if ($(e.target).closest("button, input, select, .rn-icon-btn, .rn-act, #rn-editor, #rn-editor-panel, #rn-main, #rn-sidebar, #rn-close, #rn-toggle-sidebar, .rn-tb-btn, #rn-export-btn").length) {
+            return;
+        }
+        
+        // Для touch-событий
+        if (e.type === 'touchstart') {
+            const touch = e.touches[0];
+            const target = document.elementFromPoint(touch.clientX, touch.clientY);
+            if (target && (target.closest('button') || target.closest('.rn-act') || target.closest('#rn-editor') || target.closest('input') || target.closest('select'))) {
+                return;
+            }
+        }
+        
         isDragging = true;
         hasMoved = false;
-        startX = e.clientX; startY = e.clientY;
+        const coords = getClientCoords(e);
+        startX = coords.clientX;
+        startY = coords.clientY;
         origLeft = parseInt($element.css("left")) || 0;
-        origTop  = parseInt($element.css("top"))  || 0;
-        e.preventDefault();
-    });
+        origTop = parseInt($element.css("top")) || 0;
+        
+        // Блокируем скролл при начале перетаскивания на мобильных
+        if (e.type === 'touchstart') {
+            setDraggingActive(true);
+            e.preventDefault();
+        }
+    }
 
-    $(document).on("mousemove.rn-drag", (e) => {
+    function onMove(e) {
         if (!isDragging) return;
-        const dx = e.clientX - startX;
-        const dy = e.clientY - startY;
-        if (!hasMoved && Math.abs(dx) < 4 && Math.abs(dy) < 4) return;
+        
+        const coords = getClientCoords(e);
+        const dx = coords.clientX - startX;
+        const dy = coords.clientY - startY;
+        
+        if (!hasMoved && Math.abs(dx) < 5 && Math.abs(dy) < 5) return;
+        
         hasMoved = true;
         $element.css({ left: origLeft + dx, top: origTop + dy });
-    });
+        
+        if (e.type === 'touchmove') {
+            e.preventDefault();
+        }
+    }
 
-    $(document).on("mouseup.rn-drag", (e) => {
+    function onEndEvent(e) {
         if (!isDragging) return;
+        
         const moved = hasMoved;
         isDragging = false;
-
+        
+        // Разблокируем скролл
+        setDraggingActive(false);
+        
         if (moved) {
             if (onEnd) onEnd();
         } else if (isFab) {
-            // Это был чистый клик по FAB — открываем/закрываем
             toggleApp();
         }
         hasMoved = false;
-    });
+    }
+
+    // Mouse events
+    $handle.on("mousedown", onStart);
+    $(document).on("mousemove.rn-drag", onMove);
+    $(document).on("mouseup.rn-drag", onEndEvent);
+    
+    // Touch events
+    $handle.on("touchstart", onStart);
+    $(document).on("touchmove.rn-drag", onMove);
+    $(document).on("touchend.rn-drag", onEndEvent);
+    $(document).on("touchcancel.rn-drag", onEndEvent);
 }
 
 function makeSidebarResize() {
